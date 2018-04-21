@@ -100,9 +100,7 @@ public final class Lexer {
         length += getDigitalLength(offset + length);
         if ('.' == charAt(offset + length)) {
             length++;
-            if (length == (length += getDigitalLength(offset + length))) {
-                return new Token(Other.ERROR, "");
-            }
+            length += getDigitalLength(offset + length);
         }
         final String literals = input.substring(offset, offset + length);
         offset += length;
