@@ -74,14 +74,14 @@ public final class Parser {
                         result = calculateRelational(operator, stack.pop(), stack.pop());
                         break;
                     default:
-                        throw new RpnParsingException("策略定向表达式解析出错: " + expression);
+                        throw new RpnParsingException("表达式解析出错: " + expression);
                 }
                 stack.push(result);
             }
         }
 
         if (stack.size() != 1 || stack.peek().getType() != BOOLEAN) {
-            throw new RpnParsingException("策略定向表达式解析出错: " + expression);
+            throw new RpnParsingException("表达式解析出错: " + expression);
         }
 
         return Boolean.valueOf(stack.pop().getLiterals());
@@ -98,7 +98,7 @@ public final class Parser {
         final Double operandB = getDoubleValue(tokenB);
         if (operandA == null || operandB == null) {
             if ((operandA == null && tokenA.getType() != PLACE_HOLDER) || (operandB == null && tokenB.getType() != PLACE_HOLDER)) {
-                throw new RpnParsingException("策略定向表达式解析出错: " + expression);
+                throw new RpnParsingException("表达式解析出错: " + expression);
             }
             return new Token(BOOLEAN, String.valueOf(false));
         }
@@ -124,7 +124,7 @@ public final class Parser {
                 result = operandB.doubleValue() != operandA.doubleValue();
                 break;
             default:
-                throw new RpnParsingException("策略定向表达式解析出错: " + expression);
+                throw new RpnParsingException("表达式解析出错: " + expression);
         }
 
         return new Token(BOOLEAN, String.valueOf(result));
@@ -141,7 +141,7 @@ public final class Parser {
         final Boolean operandB = getBooleanValue(tokenB);
 
         if (operandA == null || operandB == null) {
-            throw new RpnParsingException("策略定向表达式解析出错: " + expression);
+            throw new RpnParsingException("表达式解析出错: " + expression);
         }
 
         boolean result;
@@ -153,7 +153,7 @@ public final class Parser {
                 result = operandA || operandB;
                 break;
             default:
-                throw new RpnParsingException("策略定向表达式解析出错: " + expression);
+                throw new RpnParsingException("表达式解析出错: " + expression);
         }
 
         return new Token(BOOLEAN, String.valueOf(result));
@@ -185,7 +185,7 @@ public final class Parser {
         int paren = 0;
         while (END != ((currentToken = lexer.nextToken()).getType())) {
             if (ERROR == currentToken.getType()) {
-                throw new RpnParsingException("策略定向表达式语法有误: " + expression);
+                throw new RpnParsingException("表达式语法有误: " + expression);
             }
             if (currentToken.getType() instanceof Operand) {
                 postfix.add(currentToken);
@@ -200,7 +200,7 @@ public final class Parser {
                         break;
                     case RIGHT_PAREN:
                         if (paren <= 0) {
-                            throw new RpnParsingException("策略定向表达式语法有误: " + expression);
+                            throw new RpnParsingException("表达式语法有误: " + expression);
                         }
                         while (LEFT_PAREN != stack.peek().getType()) {
                             postfix.add(stack.pop());
@@ -220,7 +220,7 @@ public final class Parser {
         }
 
         if (paren != 0) {
-            throw new RpnParsingException("策略定向表达式语法有误: " + expression);
+            throw new RpnParsingException("表达式语法有误: " + expression);
         }
 
         while (stack.peek() != null) {
