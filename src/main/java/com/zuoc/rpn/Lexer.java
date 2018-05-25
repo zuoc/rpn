@@ -42,7 +42,7 @@ public final class Lexer {
         } else if (isEnd()) {
             return new Token(Other.END, "End symbol");
         } else {
-            return new Token(Other.ERROR, "Illegal expression, unknown char '" + input.charAt(offset) + "' in position " + offset);
+            return new Token(Other.ERROR, "Illegal expression '" + input + "', unknown char '" + input.charAt(offset) + "' in position " + offset);
         }
     }
 

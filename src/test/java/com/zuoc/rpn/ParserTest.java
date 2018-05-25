@@ -12,9 +12,9 @@ public class ParserTest {
 
     @Test
     public void testParse() throws RpnParsingException {
-        final Parser parser = Parser.compile("#{a_1} > 0.3 && #{b_2} <= -0.3", new ParserContext() {
+        final Parser parser = Parser.compile("#{a_1} > 0.3 && #{b_2} <= -0.3", new ParserContext(new PlaceholderEval() {
             @Override
-            public Double getPlaceholderValue(String placeholder) {
+            public double eval(String placeholder) {
                 if (placeholder == null) {
                     return 0.0d;
                 }
@@ -29,7 +29,7 @@ public class ParserTest {
 
                 return 0.0d;
             }
-        });
+        }));
 
         Assert.assertTrue(parser.parse());
     }

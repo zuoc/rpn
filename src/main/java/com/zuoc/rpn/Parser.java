@@ -23,7 +23,7 @@ public final class Parser {
 
     private final String expression;
 
-    private final ParserContext context;
+    private final PlaceholderEval eval;
 
     private final Lexer lexer;
 
@@ -45,8 +45,8 @@ public final class Parser {
 
     private Parser(final String expression, final ParserContext context) throws RpnParsingException {
         this.expression = expression;
-        this.context = context;
-        this.lexer = new Lexer(expression, context.getPlaceholderPrefix(), context.getPlaceholderSuffix());
+        this.eval = context.eval;
+        this.lexer = new Lexer(expression, context.prefix, context.suffix);
         transform();
     }
 
@@ -74,14 +74,14 @@ public final class Parser {
                         result = calculateRelational(operator, stack.pop(), stack.pop());
                         break;
                     default:
-                        throw new RpnParsingException("表达式解析出错: " + expression);
+                        throw new RpnParsingException("Unknown error evaluating expression '" + expression + "'");
                 }
                 stack.push(result);
             }
         }
 
         if (stack.size() != 1 || stack.peek().getType() != BOOLEAN) {
-            throw new RpnParsingException("表达式解析出错: " + expression);
+            throw new RpnParsingException("Unknown error evaluating expression '" + expression + "'");
         }
 
         return Boolean.valueOf(stack.pop().getLiterals());
@@ -94,19 +94,13 @@ public final class Parser {
      * @return BOOLEAN 类型的 Token
      */
     private Token calculateRelational(final Operator operator, final Token tokenA, final Token tokenB) throws RpnParsingException {
-        final Double operandA = getDoubleValue(tokenA);
-        final Double operandB = getDoubleValue(tokenB);
-        if (operandA == null || operandB == null) {
-            if ((operandA == null && tokenA.getType() != PLACE_HOLDER) || (operandB == null && tokenB.getType() != PLACE_HOLDER)) {
-                throw new RpnParsingException("表达式解析出错: " + expression);
-            }
-            return new Token(BOOLEAN, String.valueOf(false));
-        }
+        final double operandA = getDoubleValue(tokenA);
+        final double operandB = getDoubleValue(tokenB);
 
         boolean result;
         switch (operator) {
             case EQ:
-                result = operandB.doubleValue() == operandA.doubleValue();
+                result = operandB == operandA;
                 break;
             case GT:
                 result = operandB > operandA;
@@ -121,10 +115,10 @@ public final class Parser {
                 result = operandB >= operandA;
                 break;
             case NOT_EQ:
-                result = operandB.doubleValue() != operandA.doubleValue();
+                result = operandB != operandA;
                 break;
             default:
-                throw new RpnParsingException("表达式解析出错: " + expression);
+                throw new RpnParsingException("Unknown error evaluating expression '" + expression + "'");
         }
 
         return new Token(BOOLEAN, String.valueOf(result));
@@ -137,12 +131,8 @@ public final class Parser {
      * @return BOOLEAN 类型的 Token
      */
     private Token calculateLogical(final Operator operator, final Token tokenA, final Token tokenB) throws RpnParsingException {
-        final Boolean operandA = getBooleanValue(tokenA);
-        final Boolean operandB = getBooleanValue(tokenB);
-
-        if (operandA == null || operandB == null) {
-            throw new RpnParsingException("表达式解析出错: " + expression);
-        }
+        final boolean operandA = getBooleanValue(tokenA);
+        final boolean operandB = getBooleanValue(tokenB);
 
         boolean result;
         switch (operator) {
@@ -153,27 +143,40 @@ public final class Parser {
                 result = operandA || operandB;
                 break;
             default:
-                throw new RpnParsingException("表达式解析出错: " + expression);
+                throw new RpnParsingException("Unknown error evaluating expression '" + expression + "'");
         }
 
         return new Token(BOOLEAN, String.valueOf(result));
     }
 
-    private Double getDoubleValue(Token token) {
+    private double getDoubleValue(Token token) {
         if (token.getType() == PLACE_HOLDER) {
-            return context.getPlaceholderValue(token.getLiterals());
-        } else if (token.getType() == NUMBER) {
-            return Double.valueOf(token.getLiterals());
-        } else {
-            return null;
+            return eval.eval(token.getLiterals());
         }
+
+        if (token.getType() == NUMBER) {
+            try {
+                return Double.valueOf(token.getLiterals());
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("");
+            }
+        }
+
+        throw new IllegalArgumentException("");
     }
 
-    private Boolean getBooleanValue(Token token) {
+    private boolean getBooleanValue(Token token) {
         if (token.getType() == BOOLEAN) {
-            return Boolean.valueOf(token.getLiterals());
+            if ("true".equalsIgnoreCase(token.getLiterals())) {
+                return true;
+            }
+
+            if ("false".equalsIgnoreCase(token.getLiterals())) {
+                return false;
+            }
         }
-        return null;
+
+        throw new IllegalArgumentException("");
     }
 
     /**
@@ -185,7 +188,7 @@ public final class Parser {
         int paren = 0;
         while (END != ((currentToken = lexer.nextToken()).getType())) {
             if (ERROR == currentToken.getType()) {
-                throw new RpnParsingException("表达式语法有误: " + expression);
+                throw new RpnParsingException(currentToken.getLiterals());
             }
             if (currentToken.getType() instanceof Operand) {
                 postfix.add(currentToken);
@@ -200,7 +203,7 @@ public final class Parser {
                         break;
                     case RIGHT_PAREN:
                         if (paren <= 0) {
-                            throw new RpnParsingException("表达式语法有误: " + expression);
+                            throw new RpnParsingException("Unknown error evaluating expression '" + expression + "'");
                         }
                         while (LEFT_PAREN != stack.peek().getType()) {
                             postfix.add(stack.pop());
@@ -220,7 +223,7 @@ public final class Parser {
         }
 
         if (paren != 0) {
-            throw new RpnParsingException("表达式语法有误: " + expression);
+            throw new RpnParsingException("Unknown error evaluating expression '" + expression + "'");
         }
 
         while (stack.peek() != null) {
