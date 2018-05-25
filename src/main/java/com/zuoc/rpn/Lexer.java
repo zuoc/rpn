@@ -40,9 +40,9 @@ public final class Lexer {
         } else if (isOperatorBegin()) {
             return scanOperator();
         } else if (isEnd()) {
-            return new Token(Other.END, "");
+            return new Token(Other.END, "End symbol");
         } else {
-            return new Token(Other.ERROR, "");
+            return new Token(Other.ERROR, "Illegal expression, unknown char '" + input.charAt(offset) + "' in position " + offset);
         }
     }
 
@@ -61,7 +61,7 @@ public final class Lexer {
         final int nextSuffix = input.indexOf(placeholderSuffix, offset);
         if (nextSuffix == -1) {
             // miss suffix
-            return new Token(Other.ERROR, "miss suffix");
+            return new Token(Other.ERROR, "Missing specified suffix");
         }
 
         int length = 0;
@@ -69,19 +69,20 @@ public final class Lexer {
             length++;
         }
 
-        if (offset + length == nextSuffix) {
-            final String literals = input.substring(offset, offset + length);
+        final int position = offset + length;
+        if (position == nextSuffix) {
+            final String literals = input.substring(offset, position);
             offset += (length + placeholderSuffix.length());
             return new Token(Operand.PLACE_HOLDER, literals);
         }
 
-        final int nextPrefix = input.indexOf(placeholderPrefix, offset + length);
-        if (offset + length == nextPrefix) {
+        final int nextPrefix = input.indexOf(placeholderPrefix, position);
+        if (position == nextPrefix) {
             // nesting placeholder
-            return new Token(Other.ERROR, "nesting placeholder");
+            return new Token(Other.ERROR, "Nesting placeholder in position " + position);
         }
 
-        return new Token(Other.ERROR, "miss suffix");
+        return new Token(Other.ERROR, "Illegal placeholder '" + input.charAt(position) + "' in position " + position);
     }
 
     private boolean isPlaceholderChar(char ch) {
