@@ -2,70 +2,116 @@ package com.zuoc.rpn;
 
 import com.zuoc.rpn.token.Operand;
 import com.zuoc.rpn.token.Operator;
-import com.zuoc.rpn.token.Other;
 import com.zuoc.rpn.token.Token;
-
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
+import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
  * @author zuoc
  */
-@RunWith(Parameterized.class)
+
 public class LexerTest {
 
-    private final Lexer lexer;
-    private final Token[] expectedTokens;
-
-    private static List<Object[]> inputParameters = new ArrayList<>();
-
-    static {
-        inputParameters.add(inputParameters1());
-        inputParameters.add(inputParameters2());
-    }
-
-    private static Object[] inputParameters1() {
-        return new Object[]{
-                new Lexer("${1_1_0} < 1", "${", "}"),
-                new Token[]{
-                        new Token(Operand.PLACE_HOLDER, "1_1_0"),
-                        new Token(Operator.LT, "<"),
-                        new Token(Operand.NUMBER, "1")
-                }
-        };
-    }
-
-
-    private static Object[] inputParameters2() {
-        return new Object[]{
-                new Lexer("#{1_1_0} < 1", "${", "}"),
-                new Token[]{
-                        new Token(Other.ERROR, "Illegal expression '#{1_1_0} < 1', unknown char '#' in position 0"),
-                }
-        };
-    }
-
-    public LexerTest(Lexer lexer, Token[] expectedTokens) {
-        this.lexer = lexer;
-        this.expectedTokens = expectedTokens;
-    }
-
-    @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> data() {
-        return inputParameters;
-    }
-
     @Test
-    public void testNextToken() {
-        Token actualToken;
-        for (int i = 0; i < expectedTokens.length && !(actualToken = lexer.nextToken()).equals(Lexer.END_TOKEN); i++) {
-            Assert.assertEquals(expectedTokens[i], actualToken);
+    public void testNextTokenXML() throws DocumentException {
+        Lexer actual = createLexers().get(0);
+        List<Token> tokens = createToeknsList().get(0);
+        for (Token token : tokens) {
+            Assert.assertEquals(token,actual.nextToken());
         }
+
+    }
+
+    public static Document readXML(){
+        Document document = null;
+        try {
+            SAXReader reader = new SAXReader();
+            document = reader.read(new File(System.getProperty("user.dir") + "\\Token.xml"));
+        } catch (DocumentException e) {
+            e.printStackTrace();
+        }
+        return document;
+    }
+
+    private List<Lexer> createLexers(){
+        Document document = readXML();
+        List<Element> lexers = document.getRootElement().elements("lexer");
+        List<Lexer> result = new ArrayList<>();
+        for (Element lexer : lexers) {
+            String input = lexer.element("input").getTextTrim();
+            String prefix = lexer.element("prefix").getTextTrim();
+            String suffix = lexer.element("suffix").getTextTrim();
+            result.add(new Lexer(input, prefix, suffix));
+        }
+        return result;
+    }
+
+    private List<List<Token>> createToeknsList(){
+        Document document = readXML();
+        List<Element> tokensList = document.getRootElement().elements("tokens");
+        ArrayList<List<Token>> result = new ArrayList<>();
+        for (Element tokens : tokensList) {
+            List<Token> toekns = createToekns(tokens);
+            result.add(toekns);
+        }
+        return result;
+    }
+
+    private List<Token> createToekns(Element tokens){
+        List<Element> token = tokens.elements("token");
+        ArrayList<Token> result = new ArrayList<>();
+        for (int i = 0; i < token.size()-1; i++) {
+            Element element = (Element) token.get(i).elements().get(0);
+            String tokenType = element.getQualifiedName();
+            String literals = element.getTextTrim();
+            if ("PLACE_HOLDER".equals(tokenType)){
+                result.add(new Token(Operand.valueOf(tokenType),literals));
+            }
+            if ("NUMBER".equals(tokenType)){
+                result.add(new Token(Operand.valueOf(tokenType),literals));
+            }
+            if ("BOOLEAN".equals(tokenType)){
+                result.add(new Token(Operand.valueOf(tokenType),literals));
+            }
+            if ("LEFT_PAREN".equals(tokenType)){
+                result.add(new Token(Operator.valueOf(tokenType),literals));
+            }
+            if ("RIGHT_PAREN".equals(tokenType)){
+                result.add(new Token(Operator.valueOf(tokenType),literals));
+            }
+            if ("AND".equals(tokenType)){
+                result.add(new Token(Operator.valueOf(tokenType),literals));
+            }
+            if ("OR".equals(tokenType)){
+                result.add(new Token(Operator.valueOf(tokenType),literals));
+            }
+            if ("EQ".equals(tokenType)){
+                result.add(new Token(Operator.valueOf(tokenType),literals));
+            }
+            if ("GT".equals(tokenType)){
+                result.add(new Token(Operator.valueOf(tokenType),literals));
+            }
+            if ("LT".equals(tokenType)){
+                result.add(new Token(Operator.valueOf(tokenType),literals));
+            }
+            if ("LT_EQ".equals(tokenType)){
+                result.add(new Token(Operator.valueOf(tokenType),literals));
+            }
+            if ("GT_EQ".equals(tokenType)){
+                result.add(new Token(Operator.valueOf(tokenType),literals));
+            }
+            if ("NOT_EQ".equals(tokenType)){
+                result.add(new Token(Operator.valueOf(tokenType),literals));
+            }
+        }
+        return result;
     }
 }
