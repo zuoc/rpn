@@ -1,0 +1,33 @@
+<root>
+	<lexer>
+		<input>#{a_1} &gt; 0.3 &amp;&amp; #{b_2} &lt;= -0.3</input>
+		<prefix>#{</prefix>
+		<suffix>}</suffix>
+	</lexer>
+	<tokens>
+		<token>
+				<PLACE_HOLDER>a_1</PLACE_HOLDER>
+		</token>
+		<token>
+				<GT>&gt;</GT>
+		</token>
+		<token>
+				<NUMBER>0.3</NUMBER>
+		</token>
+		<token>
+				<AND>&amp;&amp;</AND>
+		</token>
+		<token>
+				<PLACE_HOLDER>b_2</PLACE_HOLDER>
+		</token>
+		<token>
+				<LT_EQ>&lt;=</LT_EQ>
+		</token>
+		<token>
+				<NUMBER> -0.3</NUMBER>
+		</token>
+	</tokens>
+</root>
+
+
+

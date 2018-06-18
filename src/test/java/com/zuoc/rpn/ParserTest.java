@@ -1,39 +1,23 @@
 package com.zuoc.rpn;
 
 import com.zuoc.rpn.exception.RpnParsingException;
+import org.dom4j.Document;
+import org.dom4j.Element;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author zuoc
  */
-@RunWith(Parameterized.class)
+
 public class ParserTest {
-
-    private String expression;
-
-    public ParserTest(String expression) {
-        super();
-        this.expression = expression;
-    }
-
-    @Parameterized.Parameters
-    public static List<String> data() {
-        String[] data = {
-          "#{a_1} > 0.3 && #{b_2} <= -0.3",
-          "#{a_1} > 1.3 && #{b_2} <= -0.3"
-        };
-        return Arrays.asList(data);
-    }
 
     @Test
     public void testParse() throws RpnParsingException {
-        final Parser parser = Parser.compile(expression, new ParserContext(new PlaceholderEval() {
+        final Parser parser = Parser.compile(createExpression().get(0), new ParserContext(new PlaceholderEval() {
             @Override
             public double eval(String placeholder) {
                 if (placeholder == null) {
@@ -53,6 +37,17 @@ public class ParserTest {
         }));
 
         Assert.assertTrue(parser.parse());
+    }
+
+    private List<String> createExpression(){
+        Document document = LexerTest.readXML();
+        List<Element> lexers = document.getRootElement().elements("lexer");
+        ArrayList<String > result = new ArrayList<String>();
+        for (Element lexer : lexers) {
+            String input = lexer.element("input").getTextTrim();
+            result.add(input);
+        }
+        return result;
     }
 
 }
