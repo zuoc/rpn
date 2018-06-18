@@ -12,6 +12,8 @@ import com.zuoc.rpn.token.Token;
  */
 public final class Lexer {
 
+    public static final Token END_TOKEN = new Token(Other.END, "End symbol");
+
     /**
      * End of input.
      */
@@ -40,7 +42,7 @@ public final class Lexer {
         } else if (isOperatorBegin()) {
             return scanOperator();
         } else if (isEnd()) {
-            return new Token(Other.END, "End symbol");
+            return END_TOKEN;
         } else {
             return new Token(Other.ERROR, "Illegal expression '" + input + "', unknown char '" + input.charAt(offset) + "' in position " + offset);
         }
@@ -170,5 +172,12 @@ public final class Lexer {
 
     private char charAt(final int index) {
         return index >= input.length() ? (char) EOI : input.charAt(index);
+    }
+
+    @Override
+    public String toString() {
+        return "Lexer{" +
+                "input='" + input + '\'' +
+                '}';
     }
 }
